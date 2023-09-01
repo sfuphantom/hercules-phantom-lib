@@ -26,3 +26,4 @@ void GetLogHeader(eSource source, const char* color, char* str);
 
 
 #endif /* PHANTOM_TASKS_HEADERS_TASK_LOGGER_H_ */
+
