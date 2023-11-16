@@ -31,7 +31,8 @@ main(){
 		.tbsize = sizeof(tbtest), // size of stt
 	};
 
-	update_state(&test_sm, e1); // update the state by passing in any events that occur
+	// update the state by passing in any events that occur
+	bool state_changed = update_state(&test_sm, e1); 
 }
 
 ```
