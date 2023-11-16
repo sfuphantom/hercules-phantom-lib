@@ -14,11 +14,11 @@ int update_state(StateMachine_t* sm, uint32_t event){
 			if (event & row.event_mask) {
 				row.action(row.next_state);
 				sm->state = row.next_state;
-				// don't break because a state may apply
-				// to multiple rows of the stt
+
+				return 1; // should only transition states once for a given event
 			}
 		}
 	}
-	return 1;
+	return 0; // no state change
 }
 

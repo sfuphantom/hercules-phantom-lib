@@ -1,11 +1,6 @@
 #pragma once
 #include "stdint.h"
 
-// a big state transition table.
-
-// gives the new state based on the struct 
-// executes an action on state exit and state enter
-// must use events as bit flags
 typedef void (*enter_action_t)(uint32_t);
 
 typedef struct StateTransition_t{
