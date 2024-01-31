@@ -36,6 +36,7 @@ enum class uart_sync_mode : uint32 {
     FORCE = 1
 };
 
+//define this function if you want write custom isrHandler
 #pragma WEAK
 void uartCallback(uart_port base, uart_intr_typ intr);
 
@@ -54,10 +55,10 @@ public:
     void detachInterrupt(uint32 priority);
     void setInterruptLevel(uart_intr_typ type, uart_intr_lvl level);
     void send(uint8* data, uint32 len, uart_sync_mode mode);
-    void recieve(uint8* data, uint32 len, uart_sync_mode mode);
+    void receive(uint8* data, uint32 len, uart_sync_mode mode);
     bool asyncSend(uint8* data, uint32 len, volatile uint32& flag);
-    bool asyncRecieve(volatile uint8* data, uint32 len, volatile uint32& flag);
-    bool isRecieveInterrupt(uart_port port, uart_intr_typ intr);
+    bool asyncReceive(volatile uint8* data, uint32 len, volatile uint32& flag);
+    bool isReceiveInterrupt(uart_port port, uart_intr_typ intr);
     bool isSendInterrupt(uart_port port, uart_intr_typ intr);
     void close();
 private:

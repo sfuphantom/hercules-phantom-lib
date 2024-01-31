@@ -36,11 +36,12 @@ void isrLinLow(void);
 
 
 
-
+//class constructor create an object with the port either sci or linsci
 PhalUart::PhalUart(uart_port base) {
     base_reg = (sciBASE_t*)(uint32)base;
 }
 
+//initialise the port with desired baudrate
 void PhalUart::init(uint32 br) {
     //sciInit() reference
     /** - bring SCI out of reset */
@@ -98,10 +99,14 @@ void PhalUart::init(uint32 br) {
     mode = 0;
 }
 
+
+//use this function to change baudrate in runtime
 void PhalUart::setBaudrate(uint32 br) {
     sciSetBaudrate(base_reg, br);
 }
 
+
+//prints the string
 void PhalUart::print(const char* str) {
     for(uint32 i = 0; str[i] != '\0'; i++) {
         while ((base_reg->FLR & (uint32)SCI_TX_INT) == 0U);
@@ -109,6 +114,7 @@ void PhalUart::print(const char* str) {
     }
 }
 
+//println, prints the string followed by newline and return symbol
 void PhalUart::println(const char* str) {
     for(uint32 i = 0; str[i] != '\0'; i++) {
         while ((base_reg->FLR & (uint32)SCI_TX_INT) == 0U);
@@ -117,6 +123,7 @@ void PhalUart::println(const char* str) {
     print("\n\r");
 }
 
+//attach an interrupt to the UART port either HIGH or LOW level with custom priority (use only 2-127) (0 and 1 priority are reserved)
 void PhalUart::attachInterrupt(uint32 priority, uart_intr_lvl lvl)
 {
     _enable_IRQ();
@@ -135,10 +142,13 @@ void PhalUart::attachInterrupt(uint32 priority, uart_intr_lvl lvl)
     vimEnableInterrupt(priority, SYS_IRQ);
 }
 
+//detach interrupt attached by passing it's priority
 void PhalUart::detachInterrupt(uint32 priority) {
     vimDisableInterrupt(priority);
 }
 
+//Use this to set Interrupt Level for different interrupt types
+//By default every interrupt is set to high
 void PhalUart::setInterruptLevel(uart_intr_typ type, uart_intr_lvl level){
     mode |= (uint32)type;
     if (level == uart_intr_lvl::HIGH)
@@ -147,13 +157,17 @@ void PhalUart::setInterruptLevel(uart_intr_typ type, uart_intr_lvl level){
         base_reg->SETINTLVL = (uint32)type;
 }
 
+//enable interrupt
 void PhalUart::enableInterrupt(uart_intr_typ type) {
     base_reg->SETINT = (uint32)type;
 }
+
+//disable interrupt
 void PhalUart::disableInterrupt(uart_intr_typ type) {
     base_reg->CLEARINT = (uint32)type;
 }
 
+//bring uart to halt
 void PhalUart::close() {
     base_reg->GCR1 &= ~(uint32)0x80U;
 }
@@ -162,6 +176,9 @@ void PhalUart::close() {
 //    return (uint32)base_reg;
 //}
 
+//send byte array of len in two modes
+//(1) WAIT mode will wait for previous asynchronous send if any
+//(2) FORCE mode will pause previous asynchronous send if any
 void PhalUart::send(uint8* data, uint32 len, uart_sync_mode mode) {
 //    while(g_TX.busy); // will wait for previous async send to finish
     uint32 id = ((uint32)base_reg == (uint32)sciREG) ? 0 : 1;
@@ -180,7 +197,10 @@ void PhalUart::send(uint8* data, uint32 len, uart_sync_mode mode) {
         enableInterrupt(uart_intr_typ::TX); //will resume async send
 }
 
-void PhalUart::recieve(uint8* data, uint32 len, uart_sync_mode mode) {
+//receive byte array of len in two modes
+//(1) WAIT mode will wait for previous asynchronous receive if any
+//(2) FORCE mode will pause previous asynchronous receive if any
+void PhalUart::receive(uint8* data, uint32 len, uart_sync_mode mode) {
     uint32 id = ((uint32)base_reg == (uint32)sciREG) ? 0 : 1;
     if (mode == uart_sync_mode::WAIT)
         while(g_RX[id].busy);
@@ -197,6 +217,7 @@ void PhalUart::recieve(uint8* data, uint32 len, uart_sync_mode mode) {
         enableInterrupt(uart_intr_typ::RX); //will pause any async send
 }
 
+//send byte array of len asynchronously, the flag will be set once the send is done, make sure to clear it before sending
 bool PhalUart::asyncSend(uint8* data, uint32 len, volatile uint32 &flag) {
     uint32 id = ((uint32)base_reg == (uint32)sciREG) ? 0 : 1;
     if ((mode & (uint32)uart_intr_typ::TX ) == 0)
@@ -217,7 +238,8 @@ bool PhalUart::asyncSend(uint8* data, uint32 len, volatile uint32 &flag) {
     return 0;
 }
 
-bool PhalUart::asyncRecieve(volatile uint8* data, uint32 len, volatile uint32 &flag) {
+//receive byte array of len asynchronously, the flag will be set once the receive is done, make sure to clear it before receiving
+bool PhalUart::asyncReceive(volatile uint8* data, uint32 len, volatile uint32 &flag) {
     uint32 id = ((uint32)base_reg == (uint32)sciREG) ? 0 : 1;
     if ((mode & (uint32)uart_intr_typ::RX ) == 0)
         return 1; //return 1 if interrupt not setup properly
@@ -236,10 +258,12 @@ bool PhalUart::asyncRecieve(volatile uint8* data, uint32 len, volatile uint32 &f
     return 0;
 }
 
-bool PhalUart::isRecieveInterrupt(uart_port port, uart_intr_typ type) {
+//use this function inside uartCallback to check if it is receive interrupt for this object
+bool PhalUart::isReceiveInterrupt(uart_port port, uart_intr_typ type) {
     return (((uint32)base_reg == (uint32)port) && ((uint32)type == (uint32)uart_intr_typ::RX));
 }
 
+//use this function inside uartCallback to check if it is trasmit interrupt for this object
 bool PhalUart::isSendInterrupt(uart_port port, uart_intr_typ type) {
     return (((uint32)base_reg == (uint32)port) && ((uint32)type == (uint32)uart_intr_typ::TX));
 }

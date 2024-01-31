@@ -95,6 +95,10 @@ extern void esmHighInterrupt(void);
 extern void phantomInterrupt(void);
 
 /* USER CODE BEGIN (3) */
+/*@}*/
+#ifdef __cplusplus
+}
+#endif
 /* USER CODE END */
 
 #define VIM_PARFLG		(*(volatile uint32 *)0xFFFFFDECU)
@@ -451,11 +455,9 @@ void vimChannelMap(uint32 request, uint32 channel, t_isrFuncPTR handler);
 void vimEnableInterrupt(uint32 channel, systemInterrupt_t inttype);
 void vimDisableInterrupt(uint32 channel);
 void vimGetConfigValue(vim_config_reg_t *config_reg, config_value_type_t type);
-
-/* USER CODE BEGIN (3) */
 /*@}*/
 #ifdef __cplusplus
 }
 #endif
-/* USER CODE END */
+
 #endif
