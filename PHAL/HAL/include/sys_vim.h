@@ -51,9 +51,6 @@
 #include "reg_vim.h"
 
 /* USER CODE BEGIN (0) */
-#ifdef __cplusplus
-extern "C" {
-#endif
 /* USER CODE END */
 
 
@@ -453,9 +450,5 @@ void vimEnableInterrupt(uint32 channel, systemInterrupt_t inttype);
 void vimDisableInterrupt(uint32 channel);
 void vimGetConfigValue(vim_config_reg_t *config_reg, config_value_type_t type);
 /*@}*/
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
