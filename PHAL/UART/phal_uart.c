@@ -24,7 +24,6 @@ void isrLinLow(void);
 typedef struct {
     volatile uint32 len;
     volatile uint8* data;
-    volatile uint32* done;
     volatile bool busy;
 } _uartAsync_t;
 
@@ -60,8 +59,6 @@ void phal_uart_init() {
         myPort->tx_callback = dummyTxCb;
         myPort->g_TX.busy = 0;
         myPort->g_RX.busy = 0;
-        myPort->g_TX.done = (uint32*)NULL;
-        myPort->g_RX.done = (uint32*)NULL;
         myPort->g_TX.len = 0;
         myPort->g_RX.len = 0;
         myPort->g_TX.data = (uint8*)NULL;
@@ -263,7 +260,7 @@ void phal_uart_receive(uart_port_id port, uint8* data, uint32 len, uart_mode mod
 
 //
 ////send byte array of len asynchronously, the flag will be set once the send is done, make sure to clear it before sending
-bool phal_uart_async_send(uart_port_id port, uint8* data, uint32 len, volatile uint32* flag) {
+bool phal_uart_async_send(uart_port_id port, uint8* data, uint32 len) {
     if (ports[port].intr_setup.tx_level == PHAL_UART_INTR_DISABLE)
         return 1; //return 1 if interrupt not setup properly
 
@@ -275,8 +272,6 @@ bool phal_uart_async_send(uart_port_id port, uint8* data, uint32 len, volatile u
 
     ports[port].g_TX.data = data + 1;
     ports[port].g_TX.len = len - 1;
-    ports[port].g_TX.done = flag;
-    *ports[port].g_TX.done = 0; //clear the flag
     ports[port].g_TX.busy = 1;
     ports[port].base_reg->TD = data[0];
     ports[port].base_reg->SETINT = (uint32)SCI_TX_INT;// enble TX
@@ -284,7 +279,7 @@ bool phal_uart_async_send(uart_port_id port, uint8* data, uint32 len, volatile u
 }
 
 //receive byte array of len asynchronously, the flag will be set once the receive is done, make sure to clear it before receiving
-bool phal_uart_async_receive(uart_port_id port, volatile uint8* data, uint32 len, volatile uint32* flag) {
+bool phal_uart_async_receive(uart_port_id port, volatile uint8* data, uint32 len) {
     if (ports[port].intr_setup.rx_level == PHAL_UART_INTR_DISABLE)
         return 1; //return 1 if interrupt not setup properly
 
@@ -296,8 +291,6 @@ bool phal_uart_async_receive(uart_port_id port, volatile uint8* data, uint32 len
 
     ports[port].g_RX.data = data;
     ports[port].g_RX.len = len;
-    ports[port].g_RX.done = flag;
-    *ports[port].g_RX.done = 0; //clear flag
     ports[port].g_RX.busy = 1;
     ports[port].base_reg->SETINT = (uint32)SCI_RX_INT;// enble TX
     return 0;
@@ -314,19 +307,18 @@ void isrSciHigh(void) {
             ports[0].g_RX.data++;
             ports[0].g_RX.len--;
             if (ports[0].g_RX.len == 0U) {
-                *ports[0].g_RX.done = 1;
                 ports[0].g_RX.busy = 0;
                 sciREG->CLEARINT = (uint32)SCI_RX_INT;
+                ports[0].rx_callback((char)(sciREG->RD & 0xFF));
             }
         }
-        ports[0].rx_callback((char)(sciREG->RD & 0xFF));
         break;
     case TRANSMIT_INT:
         if (ports[0].g_TX.len == 0U) {
             if (ports[0].g_TX.busy) {
-                *ports[0].g_TX.done = 1;
                 ports[0].g_TX.busy = 0;
                 sciREG->CLEARINT = (uint32)SCI_TX_INT;
+                ports[0].tx_callback();
             }
         }
         else {
@@ -334,7 +326,6 @@ void isrSciHigh(void) {
             ports[0].g_TX.data++;
             ports[0].g_TX.len--;
         }
-        ports[0].tx_callback();
         break;
     default:
         sciREG->FLR = sciREG->SETINTLVL & 0x07000303U;
@@ -355,19 +346,18 @@ void isrSciLow(void) {
             ports[0].g_RX.data++;
             ports[0].g_RX.len--;
             if (ports[0].g_RX.len == 0U) {
-                *ports[0].g_RX.done = 1;
                 ports[0].g_RX.busy = 0;
                 sciREG->CLEARINT = (uint32)SCI_RX_INT;
+                ports[0].rx_callback((char)(sciREG->RD & 0xFF));
             }
         }
-        ports[0].rx_callback((char)(sciREG->RD & 0xFF));
         break;
     case TRANSMIT_INT:
         if (ports[0].g_TX.len == 0U) {
             if (ports[0].g_TX.busy) {
-                *ports[0].g_TX.done = 1;
                 ports[0].g_TX.busy = 0;
                 sciREG->CLEARINT = (uint32)SCI_TX_INT;
+                ports[0].tx_callback();
             }
         }
         else {
@@ -375,7 +365,6 @@ void isrSciLow(void) {
             ports[0].g_TX.data++;
             ports[0].g_TX.len--;
         }
-        ports[0].tx_callback();
         break;
     default:
         sciREG->FLR = sciREG->SETINTLVL & 0x07000303U;
@@ -394,19 +383,18 @@ void isrLinHigh(void) {
             ports[1].g_RX.data++;
             ports[1].g_RX.len--;
             if (ports[1].g_RX.len == 0U) {
-                *ports[1].g_RX.done = 1;
                 ports[1].g_RX.busy = 0;
                 scilinREG->CLEARINT = (uint32)SCI_RX_INT;
+                ports[1].rx_callback((char)(scilinREG->RD & 0xFF));
             }
         }
-        ports[1].rx_callback((char)(scilinREG->RD & 0xFF));
         break;
     case TRANSMIT_INT:
         if (ports[1].g_TX.len == 0U) {
             if (ports[1].g_TX.busy) {
-                *ports[1].g_TX.done = 1;
                 ports[1].g_TX.busy = 0;
                 scilinREG->CLEARINT = (uint32)SCI_TX_INT;
+                ports[1].tx_callback();
             }
         }
         else {
@@ -414,7 +402,6 @@ void isrLinHigh(void) {
             ports[1].g_TX.data++;
             ports[1].g_TX.len--;
         }
-        ports[1].tx_callback();
         break;
     default:
         scilinREG->FLR = scilinREG->SETINTLVL & 0x07000303U;
@@ -434,19 +421,18 @@ void isrLinLow(void) {
             ports[1].g_RX.data++;
             ports[1].g_RX.len--;
             if (ports[1].g_RX.len == 0U) {
-                *ports[1].g_RX.done = 1;
                 ports[1].g_RX.busy = 0;
                 scilinREG->CLEARINT = (uint32)SCI_RX_INT;
+                ports[1].rx_callback((char)(scilinREG->RD & 0xFF));
             }
         }
-        ports[1].rx_callback((char)(scilinREG->RD & 0xFF));
         break;
     case TRANSMIT_INT:
         if (ports[1].g_TX.len == 0U) {
             if (ports[1].g_TX.busy) {
-                *ports[1].g_TX.done = 1;
                 ports[1].g_TX.busy = 0;
                 scilinREG->CLEARINT = (uint32)SCI_TX_INT;
+                ports[1].tx_callback();
             }
         }
         else {
@@ -454,7 +440,6 @@ void isrLinLow(void) {
             ports[1].g_TX.data++;
             ports[1].g_TX.len--;
         }
-        ports[1].tx_callback();
         break;
     default:
         scilinREG->FLR = scilinREG->SETINTLVL & 0x07000303U;

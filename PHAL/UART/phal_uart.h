@@ -52,7 +52,7 @@ void phal_uart_attach_receive_cb(uart_port_id port, uartRxCallback_t cb);
 void phal_uart_attach_transmit_cb(uart_port_id port, uartTxCallback_t cb);
 void phal_uart_send(uart_port_id port, uint8* data, uint32 len, uart_mode mode);
 void phal_uart_receive(uart_port_id port, uint8* data, uint32 len, uart_mode mode);
-bool phal_uart_async_send(uart_port_id port, uint8* data, uint32 len, volatile uint32* flag);
-bool phal_uart_async_receive(uart_port_id port, volatile uint8* data, uint32 len, volatile uint32* flag);
+bool phal_uart_async_send(uart_port_id port, uint8* data, uint32 len);
+bool phal_uart_async_receive(uart_port_id port, volatile uint8* data, uint32 len);
 
 #endif /* PHALD_UART_PHAL_UART_H_ */
