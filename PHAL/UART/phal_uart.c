@@ -25,19 +25,19 @@ typedef struct {
     volatile uint32 len;
     volatile uint8* data;
     volatile bool busy;
-} _uartAsync_t;
+} _uart_async_t;
 
 
 typedef struct {
     sciBASE_t* base_reg;
     uartRxCallback_t rx_callback;
     uartTxCallback_t tx_callback;
-    _uartAsync_t g_TX;
-    _uartAsync_t g_RX;
-    uart_intr_setup intr_setup;
-} _uartPort_t;
+    _uart_async_t g_TX;
+    _uart_async_t g_RX;
+    uart_intr_setup_t intr_setup;
+} _uart_port_t;
 
-static _uartPort_t ports[2];
+static _uart_port_t ports[2];
 
 static void dummyRxCb(char ch) {
     return;
@@ -52,7 +52,7 @@ void phal_uart_init() {
     uint32 br = 9600; //default baudrate
     //do initialisation for both ports
     for (port = 0; port < 2; port++) {
-        _uartPort_t* myPort = &(ports[port]);
+        _uart_port_t* myPort = &(ports[port]);
 
         myPort->base_reg = (port == PHAL_UART_SCI_PORT) ? sciREG : scilinREG;
         myPort->rx_callback = dummyRxCb;
@@ -116,11 +116,11 @@ void phal_uart_init() {
     }
 }
 
-void phal_uart_set_baudrate(uart_port_id port, uint32 br) {
+void phal_uart_set_baudrate(uartPort port, uint32 br) {
     sciSetBaudrate(ports[port].base_reg, br);
 }
 
-void phal_uart_print(uart_port_id port, const char* str) {
+void phal_uart_print(uartPort port, const char* str) {
     uint32 i;
     for(i = 0; str[i] != '\0'; i++) {
         while ((ports[port].base_reg->FLR & (uint32)SCI_TX_INT) == 0U);
@@ -129,12 +129,12 @@ void phal_uart_print(uart_port_id port, const char* str) {
 }
 ////
 //////println, prints the string followed by newline and return symbol
-void phal_uart_println(uart_port_id port, const char* str) {
+void phal_uart_println(uartPort port, const char* str) {
     phal_uart_print(port, str);
     phal_uart_print(port, "\n\r");
 }
 
-void phal_uart_enable_interrupt(uart_port_id port, uart_intr_setup setup) {
+void phal_uart_enable_interrupt(uartPort port, uart_intr_setup_t setup) {
     //Receive Interrupt
     _enable_IRQ();
     ports[port].intr_setup = setup;
@@ -190,8 +190,8 @@ void phal_uart_enable_interrupt(uart_port_id port, uart_intr_setup setup) {
     }
 }
 
-void phal_uart_disable_interrupt(uart_port_id port) {
-    uart_intr_setup* setup = &ports[port].intr_setup;
+void phal_uart_disable_interrupt(uartPort port) {
+    uart_intr_setup_t* setup = &ports[port].intr_setup;
     // if interrupt level is other than disable then it was enabled, disable all interrupt
     if ((setup->rx_level != PHAL_UART_INTR_DISABLE) || (setup->tx_level != PHAL_UART_INTR_DISABLE)) {
         //Low Level
@@ -206,12 +206,12 @@ void phal_uart_disable_interrupt(uart_port_id port) {
     }
 }
 
-void phal_uart_attach_receive_cb(uart_port_id port, uartRxCallback_t cb) {
+void phal_uart_attach_receive_cb(uartPort port, uartRxCallback_t cb) {
     assert(cb);
     ports[port].rx_callback = cb;
 }
 
-void phal_uart_attach_transmit_cb(uart_port_id port, uartTxCallback_t cb) {
+void phal_uart_attach_transmit_cb(uartPort port, uartTxCallback_t cb) {
     assert(cb);
     ports[port].tx_callback = cb;
 }
@@ -219,7 +219,7 @@ void phal_uart_attach_transmit_cb(uart_port_id port, uartTxCallback_t cb) {
 //send byte array of len in two modes
 //(1) WAIT mode will wait for previous asynchronous send if any
 //(2) FORCE mode will pause previous asynchronous send if any
-void phal_uart_send(uart_port_id port, uint8* data, uint32 len, uart_mode mode) {
+void phal_uart_send(uartPort port, uint8* data, uint32 len, uartMode mode) {
 //    while(g_TX.busy); // will wait for previous async send to finish
     if (mode == PHAL_UART_WAIT)
         while(ports[port].g_TX.busy);
@@ -241,7 +241,7 @@ void phal_uart_send(uart_port_id port, uint8* data, uint32 len, uart_mode mode) 
 ////receive byte array of len in two modes
 ////(1) WAIT mode will wait for previous asynchronous receive if any
 ////(2) FORCE mode will pause previous asynchronous receive if any
-void phal_uart_receive(uart_port_id port, uint8* data, uint32 len, uart_mode mode) {
+void phal_uart_receive(uartPort port, uint8* data, uint32 len, uartMode mode) {
     if (mode == PHAL_UART_WAIT)
         while(ports[port].g_RX.busy);
 
@@ -260,7 +260,7 @@ void phal_uart_receive(uart_port_id port, uint8* data, uint32 len, uart_mode mod
 
 //
 ////send byte array of len asynchronously, the flag will be set once the send is done, make sure to clear it before sending
-bool phal_uart_async_send(uart_port_id port, uint8* data, uint32 len) {
+bool phal_uart_async_send(uartPort port, uint8* data, uint32 len) {
     if (ports[port].intr_setup.tx_level == PHAL_UART_INTR_DISABLE)
         return 1; //return 1 if interrupt not setup properly
 
@@ -279,7 +279,7 @@ bool phal_uart_async_send(uart_port_id port, uint8* data, uint32 len) {
 }
 
 //receive byte array of len asynchronously, the flag will be set once the receive is done, make sure to clear it before receiving
-bool phal_uart_async_receive(uart_port_id port, volatile uint8* data, uint32 len) {
+bool phal_uart_async_receive(uartPort port, volatile uint8* data, uint32 len) {
     if (ports[port].intr_setup.rx_level == PHAL_UART_INTR_DISABLE)
         return 1; //return 1 if interrupt not setup properly
 

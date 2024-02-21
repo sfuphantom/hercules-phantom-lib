@@ -12,8 +12,8 @@
 #define MYSERIAL_INTR_PRIORITY_L  126 /*use only 2-126 and make sure not to overlap*/
 #define MYSERIAL_INTR_PRIORITY_H  125 /*use only 2-126 and make sure not to overlap*/
 
-uart_port_id mySerial = PHAL_UART_SCILIN_PORT;
-uart_intr_setup mySerialIntr = {.priority_high = MYSERIAL_INTR_PRIORITY_H,
+uartPort mySerial = PHAL_UART_SCILIN_PORT;
+uart_intr_setup_t mySerialIntr = {.priority_high = MYSERIAL_INTR_PRIORITY_H,
                                 .priority_low = MYSERIAL_INTR_PRIORITY_L,
                                 .rx_level = PHAL_UART_INTR_HIGH,
                                 .tx_level = PHAL_UART_INTR_LOW};
