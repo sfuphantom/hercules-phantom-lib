@@ -24,11 +24,11 @@ volatile uint8 message;
 char* message1 = "A for Effort!\n\r";
 
 void rxCallback(char data) {
-        phal_uart_async_send(mySerial, (uint8*)&message, 1);
+        phal_uart_listen_for_transmit(mySerial, (uint8*)&message, 1);
 }
 
 void txCallback() {
-        phal_uart_async_receive(mySerial, (uint8*)&message, 1);
+        phal_uart_listen_for_receive(mySerial, (uint8*)&message, 1);
 }
 /**
  * main.c
@@ -42,7 +42,7 @@ int main(void)
     phal_uart_attach_receive_cb(mySerial, &rxCallback);
     phal_uart_attach_transmit_cb(mySerial, &txCallback);
     phal_uart_println(mySerial, "This works??");
-    phal_uart_async_receive(mySerial, (uint8*)&message, 1);
+    phal_uart_listen_for_receive(mySerial, (uint8*)&message, 1);
     while(1) {
         phal_uart_send(mySerial, (uint8*)message1, 15, PHAL_UART_FORCE);
         for (i = 0; i < 100000000; i++);

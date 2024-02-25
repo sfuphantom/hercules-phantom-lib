@@ -260,7 +260,7 @@ void phal_uart_receive(uartPort port, uint8* data, uint32 len, uartMode mode) {
 
 //
 ////send byte array of len asynchronously, the flag will be set once the send is done, make sure to clear it before sending
-bool phal_uart_async_send(uartPort port, uint8* data, uint32 len) {
+bool phal_uart_listen_for_transmit(uartPort port, uint8* data, uint32 len) {
     if (ports[port].intr_setup.tx_level == PHAL_UART_INTR_DISABLE)
         return 1; //return 1 if interrupt not setup properly
 
@@ -279,7 +279,7 @@ bool phal_uart_async_send(uartPort port, uint8* data, uint32 len) {
 }
 
 //receive byte array of len asynchronously, the flag will be set once the receive is done, make sure to clear it before receiving
-bool phal_uart_async_receive(uartPort port, volatile uint8* data, uint32 len) {
+bool phal_uart_listen_for_receive(uartPort port, volatile uint8* data, uint32 len) {
     if (ports[port].intr_setup.rx_level == PHAL_UART_INTR_DISABLE)
         return 1; //return 1 if interrupt not setup properly
 
