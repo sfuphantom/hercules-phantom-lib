@@ -14,6 +14,7 @@
 #include "reg_sci.h"
 #include "sys_vim.h"
 #include "sys_core.h"
+#include "pinmux.h"
 #include <assert.h>
 
 typedef void (*uartRxCallback_t)(char);
@@ -42,7 +43,7 @@ typedef struct {
     uartIntrtLvl tx_level;
 } uart_intr_setup_t;
 
-void phal_uart_init();
+void phal_uart_init(uartPort port);
 void phal_uart_set_baudrate(uartPort port, uint32 br);
 void phal_uart_print(uartPort port, const char* str);
 void phal_uart_println(uartPort port, const char* str);

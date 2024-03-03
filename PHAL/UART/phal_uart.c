@@ -47,14 +47,30 @@ static void dummyTxCb(void) {
     return;
 }
 
-void phal_uart_init() {
-    uint32 port;
+void phal_uart_init(uartPort port) {
+    uint32 p;
     uint32 br = 9600; //default baudrate
-    //do initialisation for both ports
-    for (port = 0; port < 2; port++) {
-        _uart_port_t* myPort = &(ports[port]);
+    //do initialisation for both ps
 
-        myPort->base_reg = (port == PHAL_UART_SCI_PORT) ? sciREG : scilinREG;
+    //setup pins for SCI port if using SCI port, not needed for lin port as it only has one setting
+    if (port == PHAL_UART_SCI_PORT) {
+        kickerReg->KICKER0 = 0x83E70B13U;
+        kickerReg->KICKER1 = 0x95A4F1E0U;
+
+        pinMuxReg->PINMMR7 &= PINMUX_PIN_38_MASK;
+        pinMuxReg->PINMMR7 |= PINMUX_PIN_38_SCIRX;
+
+        pinMuxReg->PINMMR8 &= PINMUX_PIN_39_MASK;
+        pinMuxReg->PINMMR8 |= PINMUX_PIN_39_SCITX;
+
+        kickerReg->KICKER0 = 0x00000000U;
+        kickerReg->KICKER1 = 0x00000000U;
+    }
+
+    for (p = 0; p < 2; p++) {
+        _uart_port_t* myPort = &(ports[p]);
+
+        myPort->base_reg = (p == PHAL_UART_SCI_PORT) ? sciREG : scilinREG;
         myPort->rx_callback = dummyRxCb;
         myPort->tx_callback = dummyTxCb;
         myPort->g_TX.busy = 0;
@@ -64,8 +80,8 @@ void phal_uart_init() {
         myPort->g_TX.data = (uint8*)NULL;
         myPort->g_RX.data = (uint8*)NULL;
 
-        myPort->intr_setup.priority_high = (port == PHAL_UART_SCI_PORT) ? SCI_HIGH_LEVEL_INT_REQ : LIN_HIGH_LEVEL_INT_REQ; //default priority doesn't matter, user has to specify for setup
-        myPort->intr_setup.priority_low = (port == PHAL_UART_SCI_PORT) ? SCI_LOW_LEVEL_INT_REQ : LIN_LOW_LEVEL_INT_REQ;
+        myPort->intr_setup.priority_high = (p == PHAL_UART_SCI_PORT) ? SCI_HIGH_LEVEL_INT_REQ : LIN_HIGH_LEVEL_INT_REQ; //default priority doesn't matter, user has to specify for setup
+        myPort->intr_setup.priority_low = (p == PHAL_UART_SCI_PORT) ? SCI_LOW_LEVEL_INT_REQ : LIN_LOW_LEVEL_INT_REQ;
 
         myPort->intr_setup.rx_level = PHAL_UART_INTR_DISABLE; //Interrupts are disabled by default
         myPort->intr_setup.tx_level = PHAL_UART_INTR_DISABLE;

@@ -12,7 +12,7 @@
 #define MYSERIAL_INTR_PRIORITY_L  126 /*use only 2-126 and make sure not to overlap*/
 #define MYSERIAL_INTR_PRIORITY_H  125 /*use only 2-126 and make sure not to overlap*/
 
-uartPort mySerial = PHAL_UART_SCILIN_PORT;
+uartPort mySerial = PHAL_UART_SCI_PORT;
 uart_intr_setup_t mySerialIntr = {.priority_high = MYSERIAL_INTR_PRIORITY_H,
                                 .priority_low = MYSERIAL_INTR_PRIORITY_L,
                                 .rx_level = PHAL_UART_INTR_HIGH,
@@ -37,7 +37,7 @@ int main(void)
 {
 //    _enable_interrupt_();
     int i;
-    phal_uart_init();
+    phal_uart_init(mySerial);
     phal_uart_enable_interrupt(mySerial, mySerialIntr);
     phal_uart_attach_receive_cb(mySerial, &rxCallback);
     phal_uart_attach_transmit_cb(mySerial, &txCallback);

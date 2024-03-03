@@ -246,7 +246,8 @@
       <HDRSPI>
         <NAME>spi.h</NAME>
       </HDRSPI>
-      <SRCSPI/>
+      <SRCSPI>
+</SRCSPI>
       <HDRCAN_R>
         <NAME>reg_can.h</NAME>
       </HDRCAN_R>
@@ -254,8 +255,7 @@
         <NAME>can.h</NAME>
       </HDRCAN>
       <SRCCAN>
-        <NAME>can.c</NAME>
-      </SRCCAN>
+        </SRCCAN>
       <HDRADC_R>
         <NAME>reg_adc.h</NAME>
       </HDRADC_R>
@@ -495,7 +495,7 @@
         <PATH>include\spi.h</PATH>
       </HDRSPI>
       <SRCSPI>
-        <PATH/>
+        <PATH></PATH>
       </SRCSPI>
     </FILENAMES>
   </SPI>
@@ -508,7 +508,7 @@
         <PATH>include\can.h</PATH>
       </HDRCAN>
       <SRCCAN>
-        <PATH>source\can.c</PATH>
+        <PATH></PATH>
       </SRCCAN>
     </FILENAMES>
   </CAN>
