@@ -71,17 +71,28 @@ void FlushLogger(uint16_t waitms)
 	vTaskPrioritySet(rtos_handles.taskHandle, LOGGER_PRIORITY);
 }
 
-
 void GetLogHeader(eSource source, const char* color, char* str)
 {
 	switch (source)
 	{
 	case FROM_ISR:
-		sprintf(str,  "\r%s[FromISR:%.2f] ", color, (float)xTaskGetTickCountFromISR()/configTICK_RATE_HZ);
+
+        #ifdef SIMULATING
+            sprintf(str, "\r%s[FromISR:%.2f] ", color, (float)xTaskGetTickCountFromISR() / configTICK_RATE_HZ);
+        //This probably won't get called during simulation mode anyway since 
+        //we are abstract away any interrupt service routines, but let's keep the ifndef for consistency
+        #else   
+            sprintf(str, "\r[FromISR:%.2f] ", (float)xTaskGetTickCountFromISR() / configTICK_RATE_HZ);
+        #endif // !SIMULATING
 		break;
 	
 	case FROM_SCHEDULER:
-		sprintf(str,  "\r%s[%s:%.2f] ", color, pcTaskGetName(NULL), (float)xTaskGetTickCount()/configTICK_RATE_HZ);
+        #ifdef SIMULATING
+            sprintf(str, "\r%s[%s:%.2f] ", color, pcTaskGetName(NULL), (float)xTaskGetTickCount() / configTICK_RATE_HZ);
+        #else   
+            //sprintf(str, "\r[%s:%.2f] ", pcTaskGetName(NULL), (float)xTaskGetTickCount() / configTICK_RATE_HZ);
+            sprintf(str, "\r[%s: %.2f] ", pcTaskGetName(NULL), (float)xTaskGetTickCount() / configTICK_RATE_HZ);
+        #endif // !SIMULATING
 		break;
 
 	default:
@@ -115,19 +126,33 @@ static void LoggerThread(void* pvParams)
 
 static uint8_t LogMessage(const char* color, const char* str, eSource source)
 {
-	// prepare timestamp 
-	char header[64];
-	GetLogHeader(source, color, header);
-	AsyncPrint(source, header);
 
-	// queue user string 
-	AsyncPrint(source, str);
-	
-	// queue strings to reset console position and format
-	char buffer[16];
-	sprintf(buffer, "%s\n\r", reset);
+#ifndef SIMULATING
 
-	return AsyncPrint(source, buffer);
+    // prepare timestamp 
+    char header[64];
+    GetLogHeader(source, color, header);
+    //printf(header);
+    AsyncPrint(source, header);
+
+    // queue user string 
+    AsyncPrint(source, str);
+
+    // queue strings to reset console position and format
+    char buffer[16];
+    //sprintf(buffer, "%s\n\r", reset);
+    sprintf(buffer, "\n\r");
+
+
+    return AsyncPrint(source, buffer);
+
+#else
+    char header[64];
+    GetLogHeader(source, color, header);
+    printf(header);
+    printf(str);
+    printf("\n");
+#endif // !SIMULATING
 }
 
 
