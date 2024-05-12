@@ -76,23 +76,11 @@ void GetLogHeader(eSource source, const char* color, char* str)
 	switch (source)
 	{
 	case FROM_ISR:
-
-        #ifdef SIMULATING
             sprintf(str, "\r%s[FromISR:%.2f] ", color, (float)xTaskGetTickCountFromISR() / configTICK_RATE_HZ);
-        //This probably won't get called during simulation mode anyway since 
-        //we are abstract away any interrupt service routines, but let's keep the ifndef for consistency
-        #else   
-            sprintf(str, "\r[FromISR:%.2f] ", (float)xTaskGetTickCountFromISR() / configTICK_RATE_HZ);
-        #endif // !SIMULATING
 		break;
 	
 	case FROM_SCHEDULER:
-        #ifdef SIMULATING
             sprintf(str, "\r%s[%s:%.2f] ", color, pcTaskGetName(NULL), (float)xTaskGetTickCount() / configTICK_RATE_HZ);
-        #else   
-            //sprintf(str, "\r[%s:%.2f] ", pcTaskGetName(NULL), (float)xTaskGetTickCount() / configTICK_RATE_HZ);
-            sprintf(str, "\r[%s: %.2f] ", pcTaskGetName(NULL), (float)xTaskGetTickCount() / configTICK_RATE_HZ);
-        #endif // !SIMULATING
 		break;
 
 	default:
