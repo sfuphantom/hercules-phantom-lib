@@ -15,10 +15,14 @@
 
 #include "task_event_handler.h"
 
+#include "IPC.h"
+
 typedef uint64_t segment_t;
 #define SEGMENT_SIZE sizeof(segment_t)
 
 static PipeTask_t rtos_handles;
+
+extern Pipe SimulationPipe;
 
 static void LoggerThread(void* pvParams);
 static uint8_t LogMessage(const char* color, const char* str, eSource source);
@@ -39,6 +43,9 @@ TaskHandle_t LoggerInit()
 	);
 
     rtos_handles.q = xQueueCreate(128, sizeof(segment_t));
+
+
+	initializeSimulationPipe();
 
 	return ret == pdPASS && rtos_handles.q ? rtos_handles.taskHandle : NULL;
 }
@@ -135,11 +142,23 @@ static uint8_t LogMessage(const char* color, const char* str, eSource source)
     return AsyncPrint(source, buffer);
 
 #else
+
     char header[64];
     GetLogHeader(source, color, header);
-    printf(header);
-    printf(str);
-    printf("\n");
+
+	const char* msg = "Data from LogMessage Function\n";
+	int size = (int)strlen(msg);
+	if (SimulationPipe.handle == NULL)
+	{
+		//printf("\r%sSim Pipe Not initialized\n%s", RED, CRESET);
+		printf(header);
+		printf(str);
+		printf("\n");
+	}
+	else
+	{
+		write_to_pipe(SimulationPipe, str, (int)strlen(str));
+	}
 #endif // !SIMULATING
 }
 
