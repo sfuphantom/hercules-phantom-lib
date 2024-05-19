@@ -44,8 +44,11 @@ TaskHandle_t LoggerInit()
 
     rtos_handles.q = xQueueCreate(128, sizeof(segment_t));
 
+#ifdef SIMULATING
 
 	initializeSimulationPipe();
+
+#endif 
 
 	return ret == pdPASS && rtos_handles.q ? rtos_handles.taskHandle : NULL;
 }
