@@ -54,13 +54,23 @@ bool HandleEvent(event_handler_t callback, uint16_t data)
 
 bool  HandleEventFromISR(event_handler_t callback, uint16_t data)
 {
-	BaseType_t xHigherPriorityTaskWoken;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 	event_t event;
 	event.callback = callback;
 	event.data = data;
 
-	return xQueueSendToBackFromISR(rtos_handles.q, &event, &xHigherPriorityTaskWoken) == pdPASS;
+    BaseType_t result = xQueueSendToBackFromISR(
+        rtos_handles.q, 
+        &event, 
+        &xHigherPriorityTaskWoken
+    );
+
+	// If sending to the queue woke a higher priority task, yield to it
+	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+
+	// Return whether the queue operation succeeded
+	return result == pdPASS;
 }
 
 
