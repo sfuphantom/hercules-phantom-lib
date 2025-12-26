@@ -139,9 +139,12 @@ uint8_t QueueSegment(eSource source, segment_t segment)
 	{
 		case FROM_ISR:
 		{
-			BaseType_t xHigherPriorityTaskWoken;
+			BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 			ret = xQueueSendToBackFromISR(rtos_handles.q, &segment, &xHigherPriorityTaskWoken) == pdPASS;
+
+			// Yield to Logger task if it was woken by this queue operation
+			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 
 			break;
 		}
