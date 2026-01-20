@@ -151,7 +151,11 @@ static uint8_t LogMessage(const char* color, const char* str, eSource source)
 
 	const char* msg = "Data from LogMessage Function\n";
 	int size = (int)strlen(msg);
+#ifdef _WIN32
 	if (SimulationPipe.handle == NULL)
+#else
+	if (SimulationPipe.fd == -1)
+#endif
 	{
 		//printf("\r%sSim Pipe Not initialized\n%s", RED, CRESET);
 		printf(header);

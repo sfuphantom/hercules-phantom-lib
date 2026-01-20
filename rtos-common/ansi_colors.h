@@ -88,7 +88,9 @@
 
 #else
 
+#ifdef _WIN32
 #include <windows.h>
+#endif
 
  // Text color strings
 #define BLK "\033[0;30m"
